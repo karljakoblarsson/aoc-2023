@@ -27,3 +27,15 @@
 
 (defn parse-double [s] (Double/parseDouble s))
 (def parse-float parse-double)
+
+(defn parse-array [s]
+  (read-string (str "[ " s " ]")))
+
+; (defn re-seq-pos [pattern string]
+;   (let [m (re-matcher pattern string)]
+;     ((fn step []
+;       (when (. m find)
+;         (cons {:start (. m start) :end (. m end) :group (. m group)}
+;           (lazy-seq (step))))))))
+
+
