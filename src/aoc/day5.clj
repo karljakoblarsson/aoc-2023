@@ -85,10 +85,10 @@
   (reduce range-map i ranges))
 
 ; (reduce range-map 79 (first tm))
-(run-range-map 79 (first tm))
+; (run-range-map 79 (first tm))
 
 (def tm (map :ranges (:maps t1)) )
-(pp/pprint tm)
+; (pp/pprint tm)
 ; (first tm)
 
 (defn trace-seed [ranges seed]
@@ -118,15 +118,107 @@
     (apply concat rs')
     ))
 
-; (seeds-from-ranges [2 7 9 11])
-; ( seeds-from-ranges (:seeds t1))
+(defn seeds-to-r [in]
+  (let [rs (partition 2 in)
+        rs' (map (fn [[s l]] { :start s :len l}) rs)
+        ]
+    rs'
+    ))
+
+(defn is-inside [i a b]
+  (and (>= i a) (<= i b)))
+
+
+(defn map-range [{ alen :len as :start } { blen :len  dest :dest bs :source }]
+  (let [aend (+ as alen)
+        bend (+ bs blen)
+        diff (- dest bs)
+        ]
+    (cond
+      ; a inside b
+      (and (is-inside as bs bend) (is-inside aend bs bend))
+      [
+      { :start (+ as diff) :len alen } ; inside
+       ]
+
+      ; b inside a
+      (and (is-inside bs as aend) (is-inside bend as aend))
+      [
+      { :start (+ bs diff) :len blen } ; inside
+      { :start as :len (- bs as) } ; before b
+      { :start (inc bend)  :len (- aend (inc bend)) } ; after b
+       ]
+
+      ; start of b inside end of a
+      (and (is-inside bs as aend) (not (is-inside bend as aend)) )
+      [
+      { :start (+ bs diff) :len (- aend bs) } ; inside
+      { :start as :len (- bs as) } ; before b
+       ]
+
+      ; start of a inside end of b
+      (and (is-inside as bs bend) (not (is-inside aend bs bend)) )
+      [
+      { :start (+ as diff) :len (- bend as) } ; inside
+      { :start (inc bend)  :len (- aend (inc bend)) } ; after b
+       ]
+
+      :default nil
+      )
+    ))
+; (part2 t1)
+
+; (map-range { :start 79 :len 14} { :dest 52 :source 50 :len 48 })
+
+; (-> 13
+;   (range-map { :dest 50 :source 98 :len 2 })
+;   (range-map { :dest 52 :source 50 :len 48 })
+;     )
+; (range-map { :dest 52 :source 50 :len 48 })
+
+(defn run-map-range [i ranges]
+  (let [nx (remove nil?
+            (map #(map-range i %) ranges)
+                  )
+        ]
+  ; (println "rmr " i nx)
+    (if (empty? nx) i (flatten nx))
+    ))
+
+; (run-map-range { :start 79 :len 14} (first tm))
+(defn r-m-rs [is ranges]
+  ; (println "rs" is)
+  (flatten (map #(run-map-range % ranges) is)))
+
+; (println (r-m-rs [{ :start 79 :len 14}]  (first tm)))
+; (r-m-rs '({ :start 81 :len 14}) (second tm))
+; (println (reduce r-m-rs [{ :start 79 :len 14}] tm))
+
+(defn trace-range [mappings start-range]
+  (reduce r-m-rs [start-range] mappings))
+
+; (trace-range tm {:start 79 :len 0}) ; 82
+; (trace-range tm {:start 55 :len 0}) ; 86
+; (trace-range tm {:start 14 :len 0}) ; 43
+; (trace-range tm {:start 13 :len 0}) ; 35
+
+; (trace-range tm {:start 81 :len 1}) ; 46
+
+; (trace-range tm {:start 79 :len 12}) ; 46
+; (trace-range tm {:start 79 :len 13}) ; 60
+
+; (trace-range tm {:start 79 :len 14 }) ; 60
 
 (defn part2 [input]
   (let [seeds-rs (:seeds input)
-        seeds (seeds-from-ranges seeds-rs)
-        rs (map :ranges (:maps input)) 
-        locations (map #(trace-seed rs %) seeds)]
-    (reduce min ##Inf locations))
+        seeds (seeds-to-r seeds-rs)
+        mappings (map :ranges (:maps input)) 
+        locations (map #(trace-range mappings %) seeds)
+        locs (flatten locations)
+        locs' (filter (fn [e] (> (e :len) 0)) locs)
+        ]
+    ; (pp/pprint locs)
+    (reduce min ##Inf (map :start locs')))
   )
 
 ; (part2 t1)
