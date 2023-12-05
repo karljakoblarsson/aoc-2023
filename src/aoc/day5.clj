@@ -45,28 +45,54 @@
 (def t1 test-input)
 ; (pp/pprint t1)
 
-(defn to-map [{ :keys [dest source len]}]
-  (into (sorted-map) (map vector  (range source (+ source len)) (range dest (+ dest len))))
- )
+; (defn to-map [{ :keys [dest source len]}]
+;   (into (sorted-map) (map vector  (range source (+ source len)) (range dest (+ dest len))))
+;  )
 
-; (to-map { :dest 52 :source 50 :len 48 })
+; ; (to-map { :dest 52 :source 50 :len 48 })
 
-(defn map-to-hash [{:keys [ranges]}]
-  (apply merge (map to-map ranges)))
-; (pp/pprint (map-to-hash (first (:maps t1))))
+; (defn map-to-hash [{:keys [ranges]}]
+;   (apply merge (map to-map ranges)))
+; ; (pp/pprint (map-to-hash (first (:maps t1))))
 
-(defn lookup [i m]
-  (let [r (m i)]
-    (if (nil? r)
+; (defn lookup [i m]
+;   (let [r (m i)]
+;     (if (nil? r)
+;       i
+;       r)
+;     ))
+
+(defn range-map [i { :keys [dest source len]}]
+  (let [ls source
+        hs (+ source len)
+        diff (- dest source)
+        ]
+    ; (println diff i ls hs)
+    ; (println (and (>= i ls) (<= i hs)))
+    (if (and (>= i ls) (<= i hs))
+      (reduced (+ i diff)) 
       i
-      r)
+      )
     ))
 
-(def tm (map map-to-hash (:maps t1)))
-; (pp/pprint tm)
+; (-> 13
+;   (range-map { :dest 50 :source 98 :len 2 })
+;   (range-map { :dest 52 :source 50 :len 48 })
+;     )
+; (range-map { :dest 52 :source 50 :len 48 })
 
-(defn trace-seed [list-of-maps seed]
-  (reduce lookup seed list-of-maps))
+(defn run-range-map [i ranges]
+  (reduce range-map i ranges))
+
+; (reduce range-map 79 (first tm))
+(run-range-map 79 (first tm))
+
+(def tm (map :ranges (:maps t1)) )
+(pp/pprint tm)
+; (first tm)
+
+(defn trace-seed [ranges seed]
+  (reduce run-range-map seed ranges))
 
 ; (trace-seed tm 79)
 ; (trace-seed tm 14)
@@ -75,10 +101,8 @@
 
 (defn part1 [input]
   (let [seeds (:seeds input)
-        ms (:maps input)
-        ms' (map map-to-hash ms)
-
-        locations (map #(trace-seed ms' %) seeds)]
+        rs (map :ranges (:maps input)) 
+        locations (map #(trace-seed rs %) seeds)]
     (reduce min ##Inf locations))
   )
 
@@ -87,19 +111,26 @@
 ; (part1 input)
 ; (println (time (part1 input)))
 
-
-(defn part2 [plays]
-  (let [wins (filter #(> % 0)
-              (map (comp play-to-score filter-wins) plays))
+(defn seeds-from-ranges [in]
+  (let [rs (partition 2 in)
+        rs' (map #(range (first %) (+ (first %) (second %)) ) rs)
         ]
-    (sum (map no-cards (map :game plays)))
-    )
+    (apply concat rs')
+    ))
+
+; (seeds-from-ranges [2 7 9 11])
+; ( seeds-from-ranges (:seeds t1))
+
+(defn part2 [input]
+  (let [seeds-rs (:seeds input)
+        seeds (seeds-from-ranges seeds-rs)
+        rs (map :ranges (:maps input)) 
+        locations (map #(trace-seed rs %) seeds)]
+    (reduce min ##Inf locations))
   )
 
-; (count t1)
 ; (part2 t1)
-
-(part2 input)
+; (part2 input)
 ; (prn (time (part2 input)))
 ; (part2 input)
 
