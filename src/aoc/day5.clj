@@ -130,45 +130,56 @@
 
 
 (defn map-range [{ alen :len as :start } { blen :len  dest :dest bs :source }]
-  (let [aend (+ as alen)
-        bend (+ bs blen)
+  (let [aend (+ as alen -1) ; exclusive
+        bend (+ bs blen -1) ; exclusive
         diff (- dest bs)
         ]
+    ; (println "a" as aend alen  "b" bs bend blen)
     (cond
       ; a inside b
       (and (is-inside as bs bend) (is-inside aend bs bend))
       [
-      { :start (+ as diff) :len alen } ; inside
-       ]
+        { :start (+ as diff) :len alen } ; inside
+      ]
 
       ; b inside a
       (and (is-inside bs as aend) (is-inside bend as aend))
       [
-      { :start (+ bs diff) :len blen } ; inside
-      { :start as :len (- bs as) } ; before b
-      { :start (inc bend)  :len (- aend (inc bend)) } ; after b
-       ]
+        { :start (+ bs diff) :len blen } ; inside
+        { :start as :len (- bs as -1) } ; before b
+        { :start (inc bend)  :len (- aend bend -1) } ; after b
+      ]
 
       ; start of b inside end of a
       (and (is-inside bs as aend) (not (is-inside bend as aend)) )
       [
-      { :start (+ bs diff) :len (- aend bs) } ; inside
-      { :start as :len (- bs as) } ; before b
-       ]
+        { :start (+ bs diff) :len (- aend bs -1) } ; inside
+        { :start as :len (- bs as -1) } ; before b
+      ]
 
       ; start of a inside end of b
       (and (is-inside as bs bend) (not (is-inside aend bs bend)) )
       [
-      { :start (+ as diff) :len (- bend as) } ; inside
-      { :start (inc bend)  :len (- aend (inc bend)) } ; after b
-       ]
+        { :start (+ as diff) :len (- bend as -1) } ; inside
+        { :start (inc bend)  :len (- aend bend -1) } ; after b
+      ]
 
       :default nil
       )
     ))
-; (part2 t1)
 
+; (part2 t1)
 ; (map-range { :start 79 :len 14} { :dest 52 :source 50 :len 48 })
+
+; (map-range { :start 0 :len 10 } { :dest 20 :source 3 :len 7 })
+
+; (map-range { :start 5 :len 2 } { :dest 20 :source 3 :len 7 }) ; fully inside
+; (map-range { :start 5 :len 10 } { :dest 20 :source 8 :len 3 }) ; fully inside
+; (map-range { :start 2 :len 2 } { :dest 20 :source 3 :len 7 }) ; partial start
+; (map-range { :start 8 :len 10 } { :dest 20 :source 3 :len 7 }) ; partial end
+
+; (map-range { :start 2 :len 2 } { :dest 20 :source 17 :len 7 }) ; outside
+; (map-range { :start 33 :len 100 } { :dest 20 :source 17 :len 7 }) ; outside other side
 
 ; (-> 13
 ;   (range-map { :dest 50 :source 98 :len 2 })
@@ -205,9 +216,8 @@
 ; (trace-range tm {:start 81 :len 1}) ; 46
 
 ; (trace-range tm {:start 79 :len 12}) ; 46
-; (trace-range tm {:start 79 :len 13}) ; 60
-
-; (trace-range tm {:start 79 :len 14 }) ; 60
+; (trace-range tm {:start 79 :len 13}) ;
+; (trace-range tm {:start 79 :len 14 }) ;
 
 (defn part2 [input]
   (let [seeds-rs (:seeds input)
@@ -215,16 +225,54 @@
         mappings (map :ranges (:maps input)) 
         locations (map #(trace-range mappings %) seeds)
         locs (flatten locations)
-        locs' (filter (fn [e] (> (e :len) 0)) locs)
+        locs' (filter (fn [e] (>= (e :len) 0)) locs)
+        locs'' (map :start locs')
         ]
     ; (pp/pprint locs)
-    (reduce min ##Inf (map :start locs')))
+    ; (println (take 5 locs) )
+    ; (println (take 300 (sort locs'')) )
+    (reduce min ##Inf locs''))
   )
 
-; (part2 t1)
-; (part2 input)
-; (prn (time (part2 input)))
-; (part2 input)
+(defn rev-map [{ :keys [dest source len]}]
+  { :dest source :source dest :len len }
+  )
+
+(defn part2fusk [input]
+  (let [seeds-rs (:seeds input)
+        seeds (seeds-to-r seeds-rs)
+        rs (map :ranges (:maps input))
+        rs' (map #(map rev-map %) rs)
+        rs'' (reverse rs')
+        ; locations (map #(trace-seed rs'' %) seeds)
+        ff (fn [i] (some (fn [{:keys [start len]}] (is-inside i start (+ start len -1))) seeds))
+        ]
+    ; (println rs')
+    (first (filter (fn [i] (ff (trace-seed rs'' i))) (range))
+           )))
+
+; (part2fusk t1)
+(prn (time (part2fusk input)))
+
+; Correct answer for part 1
+; 57075758
+
+;; This version also works for part1
+; (defn part1from2 [input]
+;   (let [seeds-rs (:seeds input)
+;         seeds (map (fn [s] { :start s :len 0}) seeds-rs)
+;         mappings (map :ranges (:maps input)) 
+;         locations (map #(trace-range mappings %) seeds)
+;         locs (flatten locations)
+;         locs' (filter (fn [e] (>= (e :len) 0)) locs)
+;         locs'' (map :start locs')
+;         ]
+;     ; (println (take 5 locs) )
+;     ; (println (take 100 (sort locs'')) )
+;     (reduce min ##Inf locs''))
+;   )
+
+; (part1from2 input)
 
 (defn solve-problem [infile]
   (let [input-string (slurp infile)
