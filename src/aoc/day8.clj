@@ -126,7 +126,7 @@
 
 ; (pp/pprint (starts t3)) ; (:11A :22A)
 
-(pp/pprint (starts input))
+; (pp/pprint (starts input))
 ; '(:AAA :VDA :VSA :GTA :BBA :GPA)
 
 
@@ -142,7 +142,7 @@
            ]
         ; (println c st (nth insts inst-c))
       (let [next-in (nth insts inst-c)]
-        (if (seen [curr next-in])
+        (if (seen [curr next-in inst-c])
           { :c c
             :path path
             :loop-point [curr next-in]
@@ -151,7 +151,7 @@
             (next-in (paths curr))
             (inc c)
             (next-inst-c inst-c)
-            (conj seen [curr next-in])
+            (conj seen [curr next-in inst-c])
             (conj path [curr next-in])
            )
           )
@@ -182,7 +182,9 @@
    )
   ([{ :keys [loop-start loop-end z-index] :as all} n]
      (lazy-seq (concat
-                 (map #(+ % (* n (- loop-end loop-start)) ) z-index)
+                 (map
+                   #(+ % (* n (- loop-end loop-start)))
+                   z-index)
                  (build-i-seq all (inc n))))
    )
   )
@@ -218,6 +220,15 @@
 ;      (take 10)
 ;      )
 
+; (->> :GPA
+;      (find-loop input)
+;      (find-points)
+;      (build-i-seq)
+;      (take 10)
+;      )
+
+; (13771 27542 41313 55084 68855 82626 96397 110168 123939 137710)
+; (+ 13771 (* 1 13771)) ; 27540
 
 (defn part2 [input]
   (let [ss (vec (starts input))
@@ -225,16 +236,17 @@
         ps (mapv find-points ls)
         seqs (mapv build-i-seq ps)
         ]
-    (pp/pprint ss)
-    (pp/pprint ls)
+    ; (pp/pprint ss)
+    ; (pp/pprint ls)
     (pp/pprint ps)
-    ; (find-lowest seqs)
+    (find-lowest seqs)
     ))
 
 ; (while)
 
 ; (part2 t3)
 ; (part2 input)
+(println (time (part2 input)))
 
 
 (defn solve-problem [infile]
