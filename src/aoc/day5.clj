@@ -168,6 +168,14 @@
       )
     ))
 
+(t/are [i o] (= (frequencies i) (frequencies o))
+  (map-range { :len 4 :start 2 } { :len 5 :dest 10 :source 4})
+  [{ :start 2 :len 2 } { :start 4 :len 2 }]
+
+  (map-range { :len 4 :start 2 } { :len 5 :dest 20 :source 1})
+  [{ :start 21 :len 4 } ]
+  )
+
 ; (part2 t1)
 ; (map-range { :start 79 :len 14} { :dest 52 :source 50 :len 48 })
 
@@ -252,7 +260,7 @@
            )))
 
 ; (part2fusk t1)
-(prn (time (part2fusk input)))
+; (prn (time (part2fusk input)))
 
 ; Correct answer for part 1
 ; 57075758
