@@ -189,20 +189,43 @@
    )
   )
 
+; (defn find-lowest [seqs]
+;   (if (apply = (map first seqs))
+;              (first (first seqs))
+;              (let [[_ li] (reduce-kv
+;                             (fn [[n li] i s]
+;                               (if (< (first s) n)
+;                                 [(first s) i]
+;                                 [n li]))
+;                            [##Inf 0] 
+;                            seqs)]
+;                (recur (update seqs li rest))
+;                )))
 (defn find-lowest [seqs]
-  (if (apply = (map first seqs))
-             (first (first seqs))
-             (let [[_ li] (reduce-kv
-                            (fn [[n li] i s]
-                              (if (< (first s) n)
-                                [(first s) i]
-                                [n li]))
-                           [##Inf 0] 
-                           seqs)]
-               (recur (update seqs li rest))
-               )))
+  (let [heads (mapv first seqs)
+        highest (reduce max heads)
+        f (fn [s] (drop-while #(< % highest) s))
+        ]
+  (if (apply = heads)
+     (first heads)
+     (recur (map f seqs))
+   )))
 
 ; (find-lowest [(map #(* 2 %) (rest (range))) (map #(* 3 %) (rest (range)))])
+
+; (find-lowest [
+;               (map #(* 13 %) (rest (range)))
+;               (map #(* 95 %) (rest (range)))
+;               (map #(* 9 %) (rest (range)))
+;               (map #(* 5 %) (rest (range)))
+;               ])
+
+; (find-lowest [
+;               (map #(* 17235 %) (rest (range)))
+;               (map #(* 9245 %) (rest (range)))
+;               (map #(* 19010 %) (rest (range)))
+;               (map #(* 1925 %) (rest (range)))
+;               ])
 
 ; (pp/pprint (find-loop t3 :11A) )
 ; (pp/pprint (find-points (find-loop t3 :11A)))
@@ -246,7 +269,7 @@
 
 ; (part2 t3)
 ; (part2 input)
-(println (time (part2 input)))
+; (println (time (part2 input)))
 
 
 (defn solve-problem [infile]

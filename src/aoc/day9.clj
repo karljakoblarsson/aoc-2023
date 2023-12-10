@@ -67,7 +67,7 @@
     (reductions #(- %2 %1) 0 (reverse lasts) )
     ))
 
-(find-n-start (to-zero t2))
+; (find-n-start (to-zero t2))
 ; (part2 t1)
 
 (defn part2 [input]
@@ -78,7 +78,7 @@
 
 ; (while)
 
-(part2 t1)
+; (part2 t1)
 ; (part2 input)
 ; (println (time (part2 input)))
 
