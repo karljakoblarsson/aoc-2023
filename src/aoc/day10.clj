@@ -78,7 +78,7 @@
 
 (def t3 (to-map (prepare-input testfile3)))
 (def t4 (to-map (prepare-input testfile4)))
-(def t4 (to-map (prepare-input testfile4)))
+(def t5 (to-map (prepare-input testfile5)))
 
 (defn step [mp from curr]
   (let [dir (mp curr)
@@ -211,19 +211,69 @@
 
 ; (pp/pprint (get-path t3))
 
-; (defn get-start-piece [path]
-;   (let [start-pos (first path)
-;         f (first path)
-;         l (last path)
-;         [ns-diff ew-diff] (mapv - )])
-;   )
+(defn get-start-piece [path]
+  (let [start-pos (first path)
+        f (second path)
+        l (last path)
+        [ns-diff ew-diff] (mapv - )])
+  )
 
+(defn points [[r c] max-c]
+  (map #(vector r %)  (range c (inc max-c))))
 
-(defn part2 [input]
-  (let [vs (map #(find-n-start (to-zero %)) input) ]
-    ; (println vs)
-    (sum (map last vs))
+; (points [3 5] 10)
+
+(defn is-vertical [path p]
+  (#{ :ns :ne :nw } (path p)))
+
+(defn count-ray [mp path-set max-c p]
+  (if (path-set p)
+    []
+    (keep #(and (path-set %) (is-vertical mp %)) (points p max-c))
+    ))
+
+; (count-ray (set (get-path t3)) 10 [6 2])
+(count-ray t3 (set (get-path t3)) 10 [1 0])
+(count-ray t3 (set (get-path t3)) 10 [5 0])
+(count-ray t3 (set (get-path t3)) 10 [3 2])
+(count-ray t3 (set (get-path t3)) 10 [3 3])
+(count-ray t3 (set (get-path t3)) 10 [8 8])
+(count-ray (set (get-path t3)) 10 [1 0])
+; (pp/pprint (sort (part2 t3)))
+
+(defn get-max-c [mp]
+  (reduce max (map second (keys mp))))
+(defn get-max-r [mp]
+  (reduce max (map first (keys mp))))
+
+; (get-max-c t3) ; 10
+; (count-ray (set (get-path t3)) 10 10 [1 1])
+(defn is-in [mp path-set max-c p]
+  (let [crossing (count (count-ray mp path-set max-c p)) ]
+    (cond
+      (= 0 crossing) false
+      (= 1 (mod crossing 2)) true
+      :default false
+      )))
+
+; (partition-by nil? [12 1 2 nil 2 3 nil nil 1])
+; (is-in (set (get-path t3)) 10 [1 7])
+
+(defn part2 [mp]
+  (let [max-r (get-max-r mp)
+        max-c (get-max-c mp)
+        path-set (set (get-path mp))
+        inside (filter #(is-in mp path-set max-c %) (keys mp))
+        ]
+    inside
   ))
+
+(pp/pprint (sort (part2 t3)))
+(pp/pprint (count (part2 t3)))
+(pp/pprint (count (part2 t4)))
+(pp/pprint (count (part2 t5)))
+(pp/pprint (count (part2 (to-map input))))
+
 
 ; (while)
 
